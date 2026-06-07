@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>3分ミラー</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app-shell" aria-live="polite">
+      <section class="card" id="app">
+        <p class="eyebrow">3分ミラー</p>
+        <div class="progress" aria-label="質問の進捗">
+          <div class="progress__bar" id="progress-bar"></div>
+        </div>
+        <p class="step" id="step-label"></p>
+        <h1 id="question-title">今日の自分に、そうだったんだねを。</h1>
+        <p class="lead" id="question-lead">
+          眠る前の3分だけ、今日の気持ちをそっと置いていきましょう。
+        </p>
+        <div class="options" id="options"></div>
+        <button class="secondary-button" id="restart-button" type="button" hidden>
+          もう一度はじめる
+        </button>
+      </section>
+    </main>
+    <script src="app.js"></script>
+  </body>
+</html>
