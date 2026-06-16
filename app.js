@@ -27,6 +27,9 @@ const questions = [
 ];
 
 const answers = [];
+const trialLengthDays = 7;
+const trialStartDateKey = "threeMinuteMirrorTrialStartDate";
+const usedDateKey = "threeMinuteMirrorUsedDate";
 let currentQuestionIndex = 0;
 
 const progressBar = document.querySelector("#progress-bar");
@@ -34,22 +37,87 @@ const stepLabel = document.querySelector("#step-label");
 const questionTitle = document.querySelector("#question-title");
 const questionLead = document.querySelector("#question-lead");
 const optionsContainer = document.querySelector("#options");
-const restartButton = document.querySelector("#restart-button");
+const closeButton = document.querySelector("#close-button");
+
+function getTodayKey() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function dateFromKey(dateKey) {
+  const [year, month, day] = dateKey.split("-").map(Number);
+  return new Date(year, month - 1, day);
+}
+
+function getTrialStartDate() {
+  const savedDate = localStorage.getItem(trialStartDateKey);
+
+  if (savedDate) {
+    return savedDate;
+  }
+
+  const today = getTodayKey();
+  localStorage.setItem(trialStartDateKey, today);
+  return today;
+}
+
+function isTrialEnded() {
+  const trialStartDate = getTrialStartDate();
+  const elapsedMs = dateFromKey(getTodayKey()) - dateFromKey(trialStartDate);
+  const elapsedDays = Math.floor(elapsedMs / 86400000);
+
+  return elapsedDays >= trialLengthDays;
+}
+
+function hasUsedToday() {
+  return localStorage.getItem(usedDateKey) === getTodayKey();
+}
+
+function showCloseButton() {
+  closeButton.hidden = false;
+}
+
+function hideCloseButton() {
+  closeButton.hidden = true;
+}
+
+function resetSession() {
+  answers.length = 0;
+  currentQuestionIndex = 0;
+}
 
 function renderIntro() {
+  resetSession();
   progressBar.style.width = "0";
   stepLabel.textContent = "眠る前の3分";
   questionTitle.textContent = "今日の自分に、そうだったんだねを。";
   questionLead.textContent = "診断も、正解もありません。5つの問いに答えながら、今日ここまで来た自分を少しだけ受け止める時間です。";
   optionsContainer.innerHTML = "";
-  restartButton.hidden = true;
+  hideCloseButton();
 
   const button = document.createElement("button");
   button.className = "option-button option-button--primary";
   button.type = "button";
   button.textContent = "そっとはじめる";
-  button.addEventListener("click", renderQuestion);
+  button.addEventListener("click", startMirror);
   optionsContainer.appendChild(button);
+}
+
+function startMirror() {
+  if (isTrialEnded()) {
+    renderTrialEnded();
+    return;
+  }
+
+  if (hasUsedToday()) {
+    renderAlreadyDone();
+    return;
+  }
+
+  renderQuestion();
 }
 
 function renderQuestion() {
@@ -61,7 +129,7 @@ function renderQuestion() {
   questionTitle.textContent = question.title;
   questionLead.textContent = question.lead;
   optionsContainer.innerHTML = "";
-  restartButton.hidden = true;
+  hideCloseButton();
 
   question.options.forEach((option) => {
     const button = document.createElement("button");
@@ -86,6 +154,7 @@ function selectOption(option) {
 }
 
 function renderResult() {
+  localStorage.setItem(usedDateKey, getTodayKey());
   progressBar.style.width = "100%";
   stepLabel.textContent = "今日のミラー";
   questionTitle.textContent = "今日も、ここまで来ましたね。";
@@ -97,13 +166,27 @@ function renderResult() {
       <p>最後に「${answers[4]}」を、そっと自分へ。もう十分です。あとは少し力を抜いて、今日は休みましょう。</p>
     </div>
   `;
-  restartButton.hidden = false;
+  showCloseButton();
 }
 
-restartButton.addEventListener("click", () => {
-  answers.length = 0;
-  currentQuestionIndex = 0;
-  renderIntro();
-});
+function renderAlreadyDone() {
+  progressBar.style.width = "100%";
+  stepLabel.textContent = "今日のミラー";
+  questionTitle.textContent = "今日の3分ミラーは、もう終わっています。";
+  questionLead.innerHTML = "今日の気持ちは、<br>ここにそっと置いておきましょう。<br><br>また明日、<br>3分だけ自分に戻る時間を<br>持ってみてくださいね。";
+  optionsContainer.innerHTML = "";
+  showCloseButton();
+}
+
+function renderTrialEnded() {
+  progressBar.style.width = "100%";
+  stepLabel.textContent = "無料体験版";
+  questionTitle.textContent = "7日間の無料体験は終了しました。";
+  questionLead.textContent = "ここまで3分ミラーを使ってくれて、ありがとうございました。";
+  optionsContainer.innerHTML = "";
+  hideCloseButton();
+}
+
+closeButton.addEventListener("click", renderIntro);
 
 renderIntro();
